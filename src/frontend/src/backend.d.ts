@@ -14,10 +14,23 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export type UserId = Principal;
 export type Time = bigint;
-export type MessageId = bigint;
 export type RoomId = string;
+export interface DirectMessageSummary {
+    participant1: UserId;
+    participant2: UserId;
+    participants: [string, string];
+    createdAt: Time;
+    lastMessage?: DirectMessage;
+    lastUpdated: Time;
+    totalMessages: bigint;
+    participant2Username: string;
+    unreadCount: bigint;
+    participant1Username: string;
+    threadId: bigint;
+}
+export type UserId = Principal;
+export type MessageId = bigint;
 export interface Message {
     id: MessageId;
     content: string;
@@ -38,6 +51,16 @@ export interface UserProfile {
     lastSeen: Time;
     avatar?: ExternalBlob;
 }
+export interface DirectMessage {
+    id: MessageId;
+    content: string;
+    edited: boolean;
+    createdAt: Time;
+    senderUsername: string;
+    receiverId: UserId;
+    attachment?: ExternalBlob;
+    senderId: UserId;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -47,9 +70,24 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     deleteGlobalMessage(messageId: MessageId): Promise<void>;
     fetchGlobalMessages(fromTimestamp: Time): Promise<Array<Message>>;
+    getAllDirectMessagesStats(userId: UserId): Promise<{
+        lastMessageTime?: bigint;
+        messages: Array<DirectMessage>;
+        totalCount: bigint;
+        unreadCount: bigint;
+    }>;
+    getAllDirectMessagesWithUser(userId: UserId): Promise<Array<DirectMessage>>;
     getAllProfiles(): Promise<Array<UserProfile>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getDirectMessageThread(participant: Principal): Promise<Array<DirectMessage> | null>;
+    getDirectMessageThreadsStats(): Promise<Array<DirectMessageSummary>>;
+    getDirectMessagesWithStats(participant: Principal): Promise<{
+        lastMessageTime?: bigint;
+        messages: Array<DirectMessage>;
+        totalCount: bigint;
+        unreadCount: bigint;
+    }>;
     getProfile(user: UserId): Promise<UserProfile>;
     getSiteLogo(): Promise<ExternalBlob | null>;
     getStatus(): Promise<{
@@ -62,7 +100,8 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     logout(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    sendMessage(room: RoomId, content: string, attachment: ExternalBlob | null): Promise<void>;
+    sendDirectMessage(receiver: Principal, content: string, attachment: ExternalBlob | null): Promise<void>;
+    sendMessage(roomId: RoomId, content: string, attachment: ExternalBlob | null): Promise<void>;
     sendMessageWithAttachments(roomId: RoomId, content: string, attachments: Array<ExternalBlob>): Promise<void>;
     setSiteLogo(newLogo: ExternalBlob): Promise<void>;
     toggleOnlineStatus(isOnline: boolean): Promise<void>;

@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Add a hidden, session-based Admin Panel unlock via header logo password, and allow users to delete their own global chat messages via a mobile-friendly long-press action.
+**Goal:** Improve navigation on mobile, add private 1:1 direct messages, and allow viewing user profiles by tapping avatars anywhere in the app.
 
 **Planned changes:**
-- Add a hidden password prompt triggered by tapping/clicking the header logo; if the password is exactly "DexGod", set an "admin unlocked" flag for the current session and navigate to the Admin Panel, otherwise show an English error.
-- Gate Admin Panel navigation and rendering behind both backend admin authorization (existing isCallerAdmin) and the new session "admin unlocked" state; hide Admin Panel entry unless both are true, and show English guidance/errors when access is attempted without meeting requirements.
-- Implement a backend update method to delete a global chat message by messageId, allowing deletion only by the original sender (and optionally admins), and ensure deleted messages no longer appear in fetchGlobalMessages results.
-- Add long-press (press-and-hold) on the user’s own global chat messages to reveal a delete action; on delete, call the backend method and update the UI without a full reload; show English error messaging on failure.
+- Replace the current purple circular sidebar toggle with a standard hamburger menu icon placed in the top-right on small screens, keeping the same sidebar open/close behavior and removing the old fixed circular button.
+- Add 1:1 direct message threads between two users, reachable by selecting a user from the Users list or from the Global Chat context, with clear UI indication when viewing a DM vs global chat.
+- Enforce backend authorization so only the two DM participants can fetch and view messages in that DM thread; persist DM messages and support sending text (and any existing attachment capability already supported by the composer).
+- Enable opening a user’s read-only profile view by clicking/tapping their avatar wherever it appears (global chat messages, users list items, and DM UI), showing at least avatar, display name, username, and bio, with back navigation returning to the prior context.
 
-**User-visible outcome:** Admins can unlock the Admin Panel only after entering the correct password via the logo in the current session, and users can long-press their own chat messages to delete them so they disappear from the chat for everyone.
+**User-visible outcome:** On mobile, users see a top-right hamburger icon to open/close the sidebar. Users can start private 1:1 DMs from the Users list or global chat and only the two participants can access the thread. Tapping any user avatar opens that user’s profile (view-only) and returning brings the user back to where they were.

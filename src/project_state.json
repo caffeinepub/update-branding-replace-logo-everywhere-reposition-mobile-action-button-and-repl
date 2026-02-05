@@ -1,7 +1,31 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 20,
-  "summary": "Internet Computer app scaffolded: a Motoko backend with authorization + blob storage and a React (Vite) frontend implementing Internet Identity login, user profiles (incl. avatar upload), and a basic global chat UI with users listing. Branding to be updated for “Ghost Chat” with a new site logo.",
+  "projectStateVersion": 37,
+  "summary": "Ghost Chat scaffold remains: Motoko backend with auth + blob storage and React (Vite) frontend with Internet Identity login, profiles/avatars, and global chat. Next planned UX features: replace the purple circular menu button with a top-right hamburger menu, add 1:1 direct messaging when selecting users, and enable viewing user profiles by clicking avatars anywhere in the app.",
+  "architectural_notes": [
+    "Backend is implemented in Motoko with modular authorization (MixinAuthorization/access-control) and a separate blob-storage module for uploaded assets.",
+    "Frontend is a React (Vite) app using Tailwind + shadcn/ui component library.",
+    "Authentication uses Internet Identity; frontend establishes an authenticated actor to call the backend canister.",
+    "Asset handling includes client-side validation plus a StorageClient abstraction to interact with backend blob storage.",
+    "Repo includes an ICP-oriented build/deploy template (Dockerfile, canister yamls, deploy script, image resize/prune scripts).",
+    "Backend authorization and blob-storage components updated to v4.0.0 (per build labels).",
+    "Project build-template and React frontend template synced/updated to v1.0.0 (per build labels), touching Dockerfile/scripts/canister yamls and shadcn/ui component set.",
+    "Core infrastructure/build template updated to v1.0.2 (per build labels).",
+    "Site logo loading uses a cache/lookup flow to avoid rendering a default/fallback asset before the admin-selected logo is available.",
+    "Decision: prevent default/bundled logo flash by either (a) delaying header/nav logo render until the admin branding logo has loaded (showing a neutral/blank placeholder meanwhile) or (b) embedding the branding logo into the code/bundled assets so it is available immediately at initial render."
+  ],
+  "known_issues": [
+    "Default/bundled logo still flashes briefly in header/nav before admin-selected logo (served via URL) loads; require zero-frame default-logo render by preloading/caching branding or rendering a neutral placeholder until branding is ready, and ensure admin-selected logo replaces all logo usages everywhere."
+  ],
+  "isFixRequest": false,
+  "generatedImages": [
+    {
+      "filename": "frontend/public/assets/generated/app-logo-ghostchat.dim_512x512.png",
+      "description": "Generated/added Ghost Chat application logo asset for local static use throughout the frontend.",
+      "targetWidth": 512,
+      "targetHeight": 512
+    }
+  ],
   "existing_features": [
     {
       "id": "IF-1",
@@ -112,51 +136,77 @@
       "version": 1
     },
     {
-      "id": "IF-10",
-      "title": "Updated site branding logo asset (DexFans)",
+      "id": "IF-11",
+      "title": "Updated site branding logo asset (Ghost Chat)",
       "synonyms": [
         "site logo",
-        "app-logo-dexfans",
-        "frontend/public/assets/generated/app-logo-dexfans.dim_512x512.png"
+        "app-logo-ghostchat",
+        "frontend/public/assets/generated/app-logo-ghostchat.dim_512x512.png",
+        "useSiteLogo"
       ],
-      "description": "Replaced/updated the application logo asset to the DexFans-provided branding version for use in the frontend.",
+      "description": "Replaced/updated the application logo asset to the Ghost Chat branding version, added as a local static asset under frontend/public/assets/generated and referenced throughout the frontend (no runtime remote fetch). Alt text updated to \"Ghost Chat Logo\" where applicable.",
       "reqIds": [
-        "AR-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-hidden-admin-panel-unlock-flow-triggered-by-tapping-clicking-the-site-logo-in-the-app-header-when-the-logo-is-tapped-show-a-password-prompt-if-the-entered-password-matches-exactly-dexgod-mark-the-current-session-as-admin-unlocked-and-navigate-the-user-to-the-admin-panel-view",
-      "title": "Add a hidden Admin Panel unlock flow triggered by tapping/clicking the site logo in the app header. When the logo is tapped, show a password prompt. If the entered password matches exactly \"DexGod\", mark the current session as \"admin unlocked\" and navigate the user to the Admin Panel view.",
-      "reqIds": [
-        "REQ-4"
+        "AR-5",
+        "AR-7",
+        "AR-8"
       ],
       "version": 1
     },
     {
-      "id": "feature-gate-admin-panel-navigation-and-rendering-behind-both-1-backend-admin-authorization-existing-iscalleradmin-and-2-the-new-admin-unlocked-session-state-from-the-logo-password-prompt-ensure-non-admin-users-cannot-access-the-admin-panel-even-if-they-guess-the-password-and-ensure-admin-users-still-cannot-access-admin-panel-until-they-have-unlocked-it-in-the-current-session",
-      "title": "Gate Admin Panel navigation and rendering behind both (1) backend admin authorization (existing isCallerAdmin) and (2) the new \"admin unlocked\" session state from the logo password prompt. Ensure non-admin users cannot access the Admin Panel even if they guess the password, and ensure admin users still cannot access Admin Panel until they have unlocked it in the current session.",
+      "id": "IF-12",
+      "title": "Ghost Chat naming in user-facing UI text and browser metadata",
+      "synonyms": [
+        "app rename",
+        "document title",
+        "AppHeader branding"
+      ],
+      "description": "Updated user-facing UI strings and browser metadata (e.g., HTML document title/header brand text) to use the \"Ghost Chat\" name consistently.",
       "reqIds": [
-        "REQ-5"
+        "AR-6"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-mobile-friendly-long-press-press-and-hold-interaction-on-messages-in-the-global-chat-ui-that-the-user-owns-senderid-equals-current-caller-on-long-press-show-a-delete-icon-action-for-that-message-when-activated-delete-the-message-via-the-backend-and-remove-it-from-the-chat-log-ui-refresh-query-state-accordingly",
-      "title": "Add a mobile-friendly long-press (press-and-hold) interaction on messages in the global chat UI that the user owns (senderId equals current caller). On long-press, show a delete icon/action for that message; when activated, delete the message via the backend and remove it from the chat log UI (refresh query state accordingly).",
+      "id": "IF-13",
+      "title": "Admin-selected site logo only (no fallback/default logo flash)",
+      "synonyms": [
+        "AR-9",
+        "SiteLogo",
+        "useSiteLogo",
+        "siteLogoCache"
+      ],
+      "description": "Updated site logo loading logic to eliminate the default/fallback logo rendering so only the admin-selected (stored) logo is ever displayed, preventing the brief fallback-logo flash during initial load.",
       "reqIds": [
-        "REQ-7"
+        "AR-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-current-purple-circular-mobile-sidebar-toggle-button-with-a-standard-non-circular-hamburger-menu-icon-positioned-in-the-top-right-corner-while-keeping-the-same-sidebar-open-close-behavior",
+      "title": "Replace the current purple circular mobile sidebar toggle button with a standard (non-circular) hamburger menu icon positioned in the top-right corner, while keeping the same sidebar open/close behavior.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-private-1-to-1-direct-messaging-between-two-users-selecting-a-user-from-both-the-users-list-and-from-the-global-chat-context-must-open-a-dedicated-direct-message-thread-visible-only-to-the-two-participants",
+      "title": "Implement private 1-to-1 direct messaging between two users: selecting a user (from both the Users list and from the Global Chat context) must open a dedicated direct-message thread visible only to the two participants.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-viewing-other-users-profiles-by-clicking-tapping-their-avatar-anywhere-it-appears-in-the-app-including-global-chat-messages-user-list-items-and-direct-message-ui",
+      "title": "Enable viewing other users’ profiles by clicking/tapping their avatar anywhere it appears in the app (including global chat messages, user list items, and direct message UI).",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
-    {
-      "id": "AR-3",
-      "summary": "Move the purple circle UI element (currently above the Send button) to the middle of the side",
-      "reqIds": [],
-      "status": "pending"
-    },
     {
       "id": "AR-4",
       "summary": "Remove the footer entirely and replace it with \"DexFans 2026\"",
@@ -164,76 +214,25 @@
       "status": "pending"
     },
     {
-      "id": "AR-5",
-      "summary": "Rename the site/app to \"Ghost Chat\" and replace the site logo everywhere using the provided URL (https://file-vault-vog.caffeine.xyz/f/1770272991402-fgyl4ae)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Rename the site/app to \"Ghost Chat\" in all user-facing UI text and browser metadata (e.g., header brand text and the HTML document title).",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Replace the site logo everywhere it appears in the frontend with the user-provided logo from https://file-vault-vog.caffeine.xyz/f/1770272991402-fgyl4ae, and update image alt text to \"Ghost Chat Logo\".",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Add the Ghost Chat logo as a static frontend asset under frontend/public/assets/generated and ensure all logo usages reference that local static asset path (do not fetch the logo from the remote URL at runtime).",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Add/lock down an admin panel that opens only when tapping the site logo; only the owner can access it via an admin password (currently: DexGod), and it can be used to change/upload the site logo image.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
       "id": "AR-10",
-      "summary": "Allow users to delete their own chat messages via a mobile long-press/press-and-hold gesture that reveals a delete icon; deletion removes the message from the chat log.",
+      "summary": "Move the current purple circle menu button to the top-right and change it to a standard hamburger menu (same menu behavior)",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-13",
-      "summary": "Implement backend support for deleting a global chat message: add an update method that deletes a message by messageId, allowing only the original sender to delete their own message (and optionally admins). The deleted message must be removed from fetchGlobalMessages results so it disappears from the chat log for everyone.",
-      "reqIds": [
-        "REQ-6"
-      ],
+      "id": "AR-11",
+      "summary": "Enable private 1-to-1 direct messages when pressing a user (from both users list and chat contexts)",
+      "reqIds": [],
       "status": "pending"
-    }
-  ],
-  "architectural_notes": [
-    "Backend is implemented in Motoko with modular authorization (MixinAuthorization/access-control) and a separate blob-storage module for uploaded assets.",
-    "Frontend is a React (Vite) app using Tailwind + shadcn/ui component library.",
-    "Authentication uses Internet Identity; frontend establishes an authenticated actor to call the backend canister.",
-    "Asset handling includes client-side validation plus a StorageClient abstraction to interact with backend blob storage.",
-    "Repo includes an ICP-oriented build/deploy template (Dockerfile, canister yamls, deploy script, image resize/prune scripts).",
-    "Backend authorization and blob-storage components updated to v4.0.0 (per build labels).",
-    "Project build-template and React frontend template synced/updated to v1.0.0 (per build labels), touching Dockerfile/scripts/canister yamls and shadcn/ui component set."
-  ],
-  "known_issues": [],
-  "isFixRequest": false,
-  "generatedImages": [
+    },
     {
-      "filename": "frontend/public/assets/generated/app-logo-dexfans.dim_512x512.png",
-      "description": "Generated/added updated DexFans application logo asset.",
-      "targetWidth": 512,
-      "targetHeight": 512
+      "id": "AR-12",
+      "summary": "Make clicking any user avatar anywhere (chat messages, user list, DM list) open that user's profile",
+      "reqIds": [],
+      "status": "pending"
     }
   ],
   "projectName": "Ghost Chat",
-  "clarification_mode": "instant",
+  "clarification_mode": "thinking",
   "clarification_rounds": 0
 }

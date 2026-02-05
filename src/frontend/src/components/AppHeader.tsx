@@ -4,7 +4,7 @@ import { useGetCallerUserProfile } from '../hooks/useProfile';
 import { useGetSiteLogo } from '../hooks/useSiteLogo';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X, ArrowLeft } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import {
   Dialog,
@@ -21,9 +21,20 @@ import { toast } from 'sonner';
 interface AppHeaderProps {
   onProfileClick: () => void;
   onAdminUnlock?: () => void;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
+  showBackButton?: boolean;
+  onBack?: () => void;
 }
 
-export default function AppHeader({ onProfileClick, onAdminUnlock }: AppHeaderProps) {
+export default function AppHeader({ 
+  onProfileClick, 
+  onAdminUnlock, 
+  sidebarOpen, 
+  onToggleSidebar,
+  showBackButton,
+  onBack
+}: AppHeaderProps) {
   const { clear } = useInternetIdentity();
   const { data: userProfile } = useGetCallerUserProfile();
   const { data: logoUrl } = useGetSiteLogo();
@@ -63,15 +74,30 @@ export default function AppHeader({ onProfileClick, onAdminUnlock }: AppHeaderPr
     <>
       <header className="h-16 bg-black/60 backdrop-blur-sm border-b border-purple-500/20 flex items-center justify-between px-4 lg:px-6 shadow-lg shadow-purple-900/10">
         <div className="flex items-center gap-3">
+          {showBackButton && onBack ? (
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-purple-300 hover:text-white hover:bg-purple-900/30"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          ) : null}
+          
           <button
             onClick={handleLogoClick}
             className="focus:outline-none focus:ring-2 focus:ring-purple-500/50 rounded-lg"
           >
-            <img 
-              src={logoUrl || '/assets/generated/app-logo-dexfans.dim_512x512.png'}
-              alt="Site Logo" 
-              className="w-10 h-10 rounded-lg shadow-lg shadow-purple-500/20 cursor-pointer hover:opacity-80 transition-opacity"
-            />
+            {logoUrl ? (
+              <img 
+                src={logoUrl}
+                alt="Site Logo" 
+                className="w-10 h-10 rounded-lg shadow-lg shadow-purple-500/20 cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-purple-900/30 border border-purple-500/30 cursor-pointer hover:bg-purple-900/40 transition-colors" />
+            )}
           </button>
           <h1 className="text-xl font-bold text-white">Ghost Chat</h1>
         </div>
@@ -95,6 +121,16 @@ export default function AppHeader({ onProfileClick, onAdminUnlock }: AppHeaderPr
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline ml-2">Logout</span>
+          </Button>
+
+          {/* Mobile menu toggle - top right */}
+          <Button
+            onClick={onToggleSidebar}
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-purple-300 hover:text-white hover:bg-purple-900/30"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
       </header>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile } from '../backend';
+import type { UserProfile, UserId } from '../backend';
+import { Principal } from '@dfinity/principal';
 import { toast } from 'sonner';
 
 export function useGetCallerUserProfile() {
@@ -33,6 +34,20 @@ export function useGetAllProfiles() {
       return actor.getAllProfiles();
     },
     enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useGetUserProfile(userId: string | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<UserProfile | null>({
+    queryKey: ['userProfile', userId],
+    queryFn: async () => {
+      if (!actor || !userId) return null;
+      const principal = Principal.fromText(userId);
+      return actor.getUserProfile(principal);
+    },
+    enabled: !!actor && !actorFetching && !!userId,
   });
 }
 

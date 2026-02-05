@@ -6,9 +6,10 @@ import UserListItem from '../components/UserListItem';
 
 interface UsersPageProps {
   onSelectUser: (userId: string) => void;
+  onAvatarClick: (userId: string) => void;
 }
 
-export default function UsersPage({ onSelectUser }: UsersPageProps) {
+export default function UsersPage({ onSelectUser, onAvatarClick }: UsersPageProps) {
   const { data: profiles, isLoading } = useGetAllProfiles();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -55,7 +56,8 @@ export default function UsersPage({ onSelectUser }: UsersPageProps) {
               <UserListItem
                 key={profile.userId.toString()}
                 profile={profile}
-                onSelect={() => onSelectUser(profile.userId.toString())}
+                onMessage={() => onSelectUser(profile.userId.toString())}
+                onAvatarClick={() => onAvatarClick(profile.userId.toString())}
               />
             ))}
           </div>

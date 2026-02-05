@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 
 interface UserListItemProps {
   profile: UserProfile;
-  onSelect: () => void;
+  onMessage: () => void;
+  onAvatarClick: () => void;
 }
 
-export default function UserListItem({ profile, onSelect }: UserListItemProps) {
+export default function UserListItem({ profile, onMessage, onAvatarClick }: UserListItemProps) {
   const getPresenceLabel = () => {
     if (profile.isOnline) {
       return <span className="text-green-400 text-xs">● Online</span>;
@@ -22,7 +23,7 @@ export default function UserListItem({ profile, onSelect }: UserListItemProps) {
 
   return (
     <div className="flex items-center gap-3 p-3 bg-black/40 border border-purple-500/20 rounded-xl hover:bg-purple-900/20 transition-colors">
-      <UserAvatar profile={profile} size="md" />
+      <UserAvatar profile={profile} size="md" onClick={onAvatarClick} />
 
       <div className="flex-1 min-w-0">
         <h3 className="text-white font-semibold truncate">{profile.displayName}</h3>
@@ -31,7 +32,7 @@ export default function UserListItem({ profile, onSelect }: UserListItemProps) {
       </div>
 
       <Button
-        onClick={onSelect}
+        onClick={onMessage}
         size="sm"
         className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg shadow-purple-500/20"
       >

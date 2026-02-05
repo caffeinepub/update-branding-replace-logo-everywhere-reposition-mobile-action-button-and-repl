@@ -1,64 +1,80 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T09:01:06.887Z",
+  "generatedAt": "2026-02-05T22:07:14.492Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 3,
     "items": [
       {
-        "id": "REQ-4",
-        "summary": "Add a hidden Admin Panel unlock flow triggered by tapping/clicking the site logo in the app header. When the logo is tapped, show a password prompt. If the entered password matches exactly \"DexGod\", mark the current session as \"admin unlocked\" and navigate the user to the Admin Panel view.",
+        "id": "REQ-1",
+        "summary": "Replace the current purple circular mobile sidebar toggle button with a standard (non-circular) hamburger menu icon positioned in the top-right corner, while keeping the same sidebar open/close behavior.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useAdminUnlock.ts",
-          "frontend/src/components/AppHeader.tsx",
-          "frontend/src/components/AppLayout.tsx"
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useAdminUnlock.ts",
-          "frontend/src/components/AppHeader.tsx",
-          "frontend/src/components/AppLayout.tsx"
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
         ]
       },
       {
-        "id": "REQ-5",
-        "summary": "Gate Admin Panel navigation and rendering behind both (1) backend admin authorization (existing isCallerAdmin) and (2) the new \"admin unlocked\" session state from the logo password prompt. Ensure non-admin users cannot access the Admin Panel even if they guess the password, and ensure admin users still cannot access Admin Panel until they have unlocked it in the current session.",
+        "id": "REQ-2",
+        "summary": "Implement private 1-to-1 direct messaging between two users: selecting a user (from both the Users list and from the Global Chat context) must open a dedicated direct-message thread visible only to the two participants.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/Sidebar.tsx",
-          "frontend/src/components/AdminRouteGuard.tsx",
-          "frontend/src/components/AppLayout.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/Sidebar.tsx",
-          "frontend/src/components/AdminRouteGuard.tsx",
-          "frontend/src/components/AppLayout.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Implement backend support for deleting a global chat message: add an update method that deletes a message by messageId, allowing only the original sender to delete their own message (and optionally admins). The deleted message must be removed from fetchGlobalMessages results so it disappears from the chat log for everyone.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Add a mobile-friendly long-press (press-and-hold) interaction on messages in the global chat UI that the user owns (senderId equals current caller). On long-press, show a delete icon/action for that message; when activated, delete the message via the backend and remove it from the chat log UI (refresh query state accordingly).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useMessages.ts",
+          "frontend/src/hooks/useDirectMessages.ts",
+          "frontend/src/pages/DirectMessagePage.tsx",
+          "frontend/src/components/DirectMessageList.tsx",
+          "frontend/src/components/MessageComposer.tsx",
+          "frontend/src/pages/UsersPage.tsx",
+          "frontend/src/components/UserListItem.tsx",
           "frontend/src/components/MessageList.tsx",
-          "frontend/src/pages/GlobalChatPage.tsx"
+          "frontend/src/pages/GlobalChatPage.tsx",
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useMessages.ts",
-          "frontend/src/components/MessageList.tsx"
+          "frontend/src/hooks/useDirectMessages.ts",
+          "frontend/src/pages/DirectMessagePage.tsx",
+          "frontend/src/components/DirectMessageList.tsx",
+          "frontend/src/components/MessageComposer.tsx",
+          "frontend/src/pages/UsersPage.tsx",
+          "frontend/src/components/UserListItem.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/pages/GlobalChatPage.tsx",
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Enable viewing other users’ profiles by clicking/tapping their avatar anywhere it appears in the app (including global chat messages, user list items, and direct message UI).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useProfile.ts",
+          "frontend/src/pages/UserProfileViewPage.tsx",
+          "frontend/src/components/UserAvatar.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/components/UserListItem.tsx",
+          "frontend/src/components/DirectMessageList.tsx",
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useProfile.ts",
+          "frontend/src/pages/UserProfileViewPage.tsx",
+          "frontend/src/components/UserAvatar.tsx",
+          "frontend/src/components/MessageList.tsx",
+          "frontend/src/components/UserListItem.tsx",
+          "frontend/src/components/DirectMessageList.tsx",
+          "frontend/src/components/AppLayout.tsx",
+          "frontend/src/components/AppHeader.tsx"
         ]
       }
     ]
@@ -67,21 +83,27 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/AdminRouteGuard.tsx",
     "frontend/src/components/AppHeader.tsx",
     "frontend/src/components/AppLayout.tsx",
+    "frontend/src/components/DirectMessageList.tsx",
+    "frontend/src/components/MessageComposer.tsx",
     "frontend/src/components/MessageList.tsx",
-    "frontend/src/components/Sidebar.tsx",
+    "frontend/src/components/UserAvatar.tsx",
+    "frontend/src/components/UserListItem.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useAdminUnlock.ts",
-    "frontend/src/hooks/useMessages.ts",
-    "frontend/src/utils/urlParams.ts",
+    "frontend/src/hooks/useDirectMessages.ts",
+    "frontend/src/hooks/useProfile.ts",
+    "frontend/src/pages/DirectMessagePage.tsx",
+    "frontend/src/pages/GlobalChatPage.tsx",
+    "frontend/src/pages/UserProfileViewPage.tsx",
+    "frontend/src/pages/UsersPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

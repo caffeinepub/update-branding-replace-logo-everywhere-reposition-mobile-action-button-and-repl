@@ -1,89 +1,81 @@
 {
   "kind": "build_request",
-  "title": "Hidden admin unlock on logo tap + long-press delete for own chat messages",
+  "title": "Move menu icon to top-right, add 1:1 direct messages, and enable profile viewing via avatar clicks",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-4",
-      "text": "Add a hidden Admin Panel unlock flow triggered by tapping/clicking the site logo in the app header. When the logo is tapped, show a password prompt. If the entered password matches exactly \"DexGod\", mark the current session as \"admin unlocked\" and navigate the user to the Admin Panel view.",
+      "id": "REQ-1",
+      "text": "Replace the current purple circular mobile sidebar toggle button with a standard (non-circular) hamburger menu icon positioned in the top-right corner, while keeping the same sidebar open/close behavior.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-USER-1"
         ],
         "quotes": [
-          "The admin panel password opens when touching the logo only I can access the admin panel and the password is DexGod"
+          "The purple circle menu icon can be moved to top right corner and not be a circle anymore but a normal standard website menu icon - ..."
         ]
       },
       "acceptanceCriteria": [
-        "Tapping/clicking the logo in the header opens a password prompt (not visible otherwise).",
-        "Entering \"DexGod\" successfully unlocks the admin session and takes the user to the Admin Panel view.",
-        "Entering any other password shows an English error message and does not unlock admin access."
+        "On small screens, the sidebar toggle control appears in the top-right of the app UI.",
+        "The toggle uses a standard hamburger/menu icon style and is not rendered as a purple circular button.",
+        "Tapping the icon opens/closes the same sidebar navigation currently controlled by the purple circular button.",
+        "The previous fixed middle-right circular toggle button is removed and no longer visible."
       ]
     },
     {
-      "id": "REQ-5",
-      "text": "Gate Admin Panel navigation and rendering behind both (1) backend admin authorization (existing isCallerAdmin) and (2) the new \"admin unlocked\" session state from the logo password prompt. Ensure non-admin users cannot access the Admin Panel even if they guess the password, and ensure admin users still cannot access Admin Panel until they have unlocked it in the current session.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "only I can access the admin panel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin Panel entry is not shown in the sidebar unless the caller is an admin AND the session is unlocked.",
-        "Attempting to switch to the Admin Panel view without unlocking shows an English message instructing the user to unlock via the logo password.",
-        "Attempting to switch to the Admin Panel view as a non-admin continues to show an English access denied state (existing behavior)."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Implement backend support for deleting a global chat message: add an update method that deletes a message by messageId, allowing only the original sender to delete their own message (and optionally admins). The deleted message must be removed from fetchGlobalMessages results so it disappears from the chat log for everyone.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "users can also delete their messages ... and they can delete the message from the chat log"
-        ]
-      },
-      "acceptanceCriteria": [
-        "There is a new backend update method to delete a message by id.",
-        "If the caller is not the message sender (and not an admin, if admin override is included), the backend rejects the deletion attempt.",
-        "After successful deletion, subsequent fetchGlobalMessages calls do not include the deleted message."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Add a mobile-friendly long-press (press-and-hold) interaction on messages in the global chat UI that the user owns (senderId equals current caller). On long-press, show a delete icon/action for that message; when activated, delete the message via the backend and remove it from the chat log UI (refresh query state accordingly).",
+      "id": "REQ-2",
+      "text": "Implement private 1-to-1 direct messaging between two users: selecting a user (from both the Users list and from the Global Chat context) must open a dedicated direct-message thread visible only to the two participants.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-USER-1",
+          "msg-USER-2"
         ],
         "quotes": [
-          "users can also delete their messages by holding their finger on the message and a delete icon come up and they can delete the message from the chat log"
+          "when I press on a user I can direct message them as a private messaging between 2 users only",
+          "1. Both"
         ]
       },
       "acceptanceCriteria": [
-        "Long-pressing an own message reveals a delete icon/action; messages from other users do not show a delete option.",
-        "Tapping the delete action triggers deletion and the message disappears from the list without requiring a full page reload.",
-        "Any errors returned by the backend are shown as an English toast/error message and the message remains visible."
+        "From the Users page, pressing a user opens a 1:1 DM conversation with that specific user (not the global chat).",
+        "From the Global Chat context, pressing a user also opens a 1:1 DM conversation with that user.",
+        "Direct messages sent in a 1:1 thread are only retrievable by the two participating users via backend authorization checks (other authenticated users cannot fetch the thread).",
+        "A DM thread persists messages and supports sending text (and any existing attachment capability if supported in the current message composer flow).",
+        "The UI clearly indicates when the user is in a direct message conversation vs the global chat (e.g., header/title shows the recipient name)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Enable viewing other users’ profiles by clicking/tapping their avatar anywhere it appears in the app (including global chat messages, user list items, and direct message UI).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-USER-1",
+          "msg-USER-2"
+        ],
+        "quotes": [
+          "when I press on others avatars I can view their profiles",
+          "Yes to all"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking an avatar in the global message list opens that sender’s profile view.",
+        "Clicking an avatar in the users list opens that user’s profile view.",
+        "Clicking an avatar in any direct-message UI opens that user’s profile view.",
+        "The opened profile view displays the selected user’s public profile fields (at minimum: avatar, display name, username, bio) and does not allow editing another user’s profile.",
+        "Navigating back returns the user to the previous context (global chat, users list, or DM thread)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister; implement message deletion within backend/main.mo.",
-    "Do not modify any files under frontend/immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui).",
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead.",
     "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Do not add third-party authentication methods beyond Internet Identity.",
-    "Do not add real-time WebSocket-based chat; continue using the existing polling/react-query approach."
+    "Do not add group chats or multi-user rooms beyond 1-to-1 direct messages.",
+    "Do not add third-party authentication providers (Internet Identity remains the only auth).",
+    "Do not implement real-time messaging via WebSockets; continue using the existing request/response + react-query approach."
   ],
   "imageRequirements": {
     "required": [],

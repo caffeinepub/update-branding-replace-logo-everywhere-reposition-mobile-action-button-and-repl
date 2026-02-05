@@ -10,6 +10,29 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface DirectMessage {
+  'id' : MessageId,
+  'content' : string,
+  'edited' : boolean,
+  'createdAt' : Time,
+  'senderUsername' : string,
+  'receiverId' : UserId,
+  'attachment' : [] | [ExternalBlob],
+  'senderId' : UserId,
+}
+export interface DirectMessageSummary {
+  'participant1' : UserId,
+  'participant2' : UserId,
+  'participants' : [string, string],
+  'createdAt' : Time,
+  'lastMessage' : [] | [DirectMessage],
+  'lastUpdated' : Time,
+  'totalMessages' : bigint,
+  'participant2Username' : string,
+  'unreadCount' : bigint,
+  'participant1Username' : string,
+  'threadId' : bigint,
+}
 export type ExternalBlob = Uint8Array;
 export interface Message {
   'id' : MessageId,
@@ -69,9 +92,33 @@ export interface _SERVICE {
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteGlobalMessage' : ActorMethod<[MessageId], undefined>,
   'fetchGlobalMessages' : ActorMethod<[Time], Array<Message>>,
+  'getAllDirectMessagesStats' : ActorMethod<
+    [UserId],
+    {
+      'lastMessageTime' : [] | [bigint],
+      'messages' : Array<DirectMessage>,
+      'totalCount' : bigint,
+      'unreadCount' : bigint,
+    }
+  >,
+  'getAllDirectMessagesWithUser' : ActorMethod<[UserId], Array<DirectMessage>>,
   'getAllProfiles' : ActorMethod<[], Array<UserProfile>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getDirectMessageThread' : ActorMethod<
+    [Principal],
+    [] | [Array<DirectMessage>]
+  >,
+  'getDirectMessageThreadsStats' : ActorMethod<[], Array<DirectMessageSummary>>,
+  'getDirectMessagesWithStats' : ActorMethod<
+    [Principal],
+    {
+      'lastMessageTime' : [] | [bigint],
+      'messages' : Array<DirectMessage>,
+      'totalCount' : bigint,
+      'unreadCount' : bigint,
+    }
+  >,
   'getProfile' : ActorMethod<[UserId], UserProfile>,
   'getSiteLogo' : ActorMethod<[], [] | [ExternalBlob]>,
   'getStatus' : ActorMethod<
@@ -87,6 +134,10 @@ export interface _SERVICE {
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'logout' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendDirectMessage' : ActorMethod<
+    [Principal, string, [] | [ExternalBlob]],
+    undefined
+  >,
   'sendMessage' : ActorMethod<[RoomId, string, [] | [ExternalBlob]], undefined>,
   'sendMessageWithAttachments' : ActorMethod<
     [RoomId, string, Array<ExternalBlob>],

@@ -4,7 +4,12 @@ import MessageList from '../components/MessageList';
 import MessageComposer from '../components/MessageComposer';
 import { Loader2 } from 'lucide-react';
 
-export default function GlobalChatPage() {
+interface GlobalChatPageProps {
+  onUserClick?: (userId: string) => void;
+  onAvatarClick?: (userId: string) => void;
+}
+
+export default function GlobalChatPage({ onUserClick, onAvatarClick }: GlobalChatPageProps) {
   const { data: messages, isLoading } = useFetchGlobalMessages();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -40,14 +45,18 @@ export default function GlobalChatPage() {
           </div>
         ) : (
           <>
-            <MessageList messages={messages || []} />
+            <MessageList 
+              messages={messages || []} 
+              onUserClick={onUserClick}
+              onAvatarClick={onAvatarClick}
+            />
             <div ref={bottomRef} />
           </>
         )}
       </div>
 
       <div className="p-4 border-t border-purple-500/20 bg-black/40 backdrop-blur-sm">
-        <MessageComposer />
+        <MessageComposer mode="global" />
       </div>
     </div>
   );

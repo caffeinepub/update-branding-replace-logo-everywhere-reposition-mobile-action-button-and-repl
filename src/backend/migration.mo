@@ -1,45 +1,83 @@
 import Map "mo:core/Map";
-import Nat "mo:core/Nat";
+import List "mo:core/List";
 import Principal "mo:core/Principal";
-import Time "mo:core/Time";
+import Nat "mo:core/Nat";
 import Storage "blob-storage/Storage";
 
 module {
-  type MessageId = Nat;
   type UserId = Principal;
-  type Username = Text;
+  type MessageId = Nat;
+  type RoomId = Text;
+
+  type OldMessage = {
+    id : MessageId;
+    senderId : UserId;
+    senderUsername : Text;
+    content : Text;
+    createdAt : Int;
+    attachment : ?Storage.ExternalBlob;
+    edited : Bool;
+  };
+
+  type OldUserProfile = {
+    userId : UserId;
+    username : Text;
+    displayName : Text;
+    bio : Text;
+    avatar : ?Storage.ExternalBlob;
+    createdAt : Int;
+    lastSeen : Int;
+    isOnline : Bool;
+  };
 
   type OldActor = {
-    globalMessages : Map.Map<MessageId, {
-      id : MessageId;
-      senderId : UserId;
-      senderUsername : Username;
-      content : Text;
-      createdAt : Time.Time;
-      attachment : ?Storage.ExternalBlob;
-      edited : Bool;
-    }>;
-    // Old state type
+    users : Map.Map<UserId, OldUserProfile>;
+    usernameToId : Map.Map<Text, UserId>;
+    globalMessages : Map.Map<MessageId, OldMessage>;
+    deletedMessageIds : Map.Map<MessageId, ()>;
+    messageCounter : Nat;
+    siteLogo : ?Storage.ExternalBlob;
+    failedLoginAttempts : List.List<UserId>;
+  };
+
+  type DirectMessageThreadId = Nat;
+  type DirectMessage = {
+    id : MessageId;
+    senderId : UserId;
+    senderUsername : Text;
+    receiverId : UserId;
+    content : Text;
+    createdAt : Int;
+    attachment : ?Storage.ExternalBlob;
+    edited : Bool;
+  };
+
+  type DirectMessageThread = {
+    id : DirectMessageThreadId;
+    participant1 : UserId;
+    participant2 : UserId;
+    createdAt : Int;
+    messages : [DirectMessage];
+    lastUpdated : Int;
   };
 
   type NewActor = {
-    globalMessages : Map.Map<MessageId, {
-      id : MessageId;
-      senderId : UserId;
-      senderUsername : Username;
-      content : Text;
-      createdAt : Time.Time;
-      attachment : ?Storage.ExternalBlob;
-      edited : Bool;
-    }>;
+    users : Map.Map<UserId, OldUserProfile>;
+    usernameToId : Map.Map<Text, UserId>;
+    globalMessages : Map.Map<MessageId, OldMessage>;
     deletedMessageIds : Map.Map<MessageId, ()>;
+    messageCounter : Nat;
+    siteLogo : ?Storage.ExternalBlob;
+    failedLoginAttempts : List.List<UserId>;
+    directMessageThreads : Map.Map<DirectMessageThreadId, DirectMessageThread>;
+    directMessageThreadCounter : Nat;
   };
 
   public func run(old : OldActor) : NewActor {
-    // Add a new empty deletedMessageIds map to the existing state
     {
-      globalMessages = old.globalMessages;
-      deletedMessageIds = Map.empty<MessageId, ()>();
+      old with
+      directMessageThreads = Map.empty<DirectMessageThreadId, DirectMessageThread>();
+      directMessageThreadCounter = 0;
     };
   };
 };

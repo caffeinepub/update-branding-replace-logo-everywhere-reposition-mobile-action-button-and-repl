@@ -1,83 +1,143 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Hidden admin unlock via logo prompt + long-press delete for own global chat messages",
+  "title": "UI menu toggle reposition + 1:1 direct messages + avatar-driven profile viewing",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Add a hidden admin unlock flow by tapping the header logo to prompt for a password and unlock the admin session, then navigate to Admin Panel.",
+      "id": "REQ-1",
+      "summary": "Move the mobile sidebar toggle to a standard hamburger icon in the top-right while preserving existing sidebar open/close behavior.",
       "acceptanceCriteria": [
-        "Tapping/clicking the logo in the header opens a password prompt (not visible otherwise).",
-        "Entering \"DexGod\" successfully unlocks the admin session and takes the user to the Admin Panel view.",
-        "Entering any other password shows an English error message and does not unlock admin access."
+        "On small screens, the sidebar toggle control appears in the top-right of the app UI.",
+        "The toggle uses a standard hamburger/menu icon style and is not rendered as a purple circular button.",
+        "Tapping the icon opens/closes the same sidebar navigation currently controlled by the purple circular button.",
+        "The previous fixed middle-right circular toggle button is removed and no longer visible."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useAdminUnlock.ts",
-          "operation": "create",
-          "description": "Create a small session-scoped admin unlock state helper (e.g., sessionStorage-backed) that can set/clear/read an \"admin unlocked\" flag for the current browser session."
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Remove the fixed middle-right circular toggle button and refactor sidebarOpen state so it can be toggled from the header; keep the same sidebar open/close behavior and overlay behavior."
         },
         {
           "path": "frontend/src/components/AppHeader.tsx",
           "operation": "modify",
-          "description": "Make the site logo clickable/tappable; on click, open a password prompt and compare against the exact string \"DexGod\". On success, set the admin-unlocked session state (via the new hook) and trigger navigation to the Admin Panel view; on failure, show an English error message (e.g., via toast). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/AppLayout.tsx",
-          "operation": "modify",
-          "description": "Wire the header logo unlock flow into view navigation: pass an explicit handler into AppHeader so a successful unlock can set the current view to 'admin' immediately."
+          "description": "Add a mobile-only top-right hamburger menu control (standard non-circular icon button) that toggles the existing sidebar open/close state via new props from AppLayout; ensure it appears in the top-right of the app UI."
         }
       ]
     },
     {
-      "id": "REQ-5",
-      "summary": "Gate Admin Panel navigation and rendering behind both backend admin authorization and the new session-based admin unlock state.",
+      "id": "REQ-2",
+      "summary": "Add dedicated 1:1 direct message threads that open from the Users list and from the Global Chat context, with persisted messages and clear DM vs Global UI indication.",
       "acceptanceCriteria": [
-        "Admin Panel entry is not shown in the sidebar unless the caller is an admin AND the session is unlocked.",
-        "Attempting to switch to the Admin Panel view without unlocking shows an English message instructing the user to unlock via the logo password.",
-        "Attempting to switch to the Admin Panel view as a non-admin continues to show an English access denied state (existing behavior)."
+        "From the Users page, pressing a user opens a 1:1 DM conversation with that specific user (not the global chat).",
+        "From the Global Chat context, pressing a user also opens a 1:1 DM conversation with that user.",
+        "Direct messages sent in a 1:1 thread are only retrievable by the two participating users via backend authorization checks (other authenticated users cannot fetch the thread).",
+        "A DM thread persists messages and supports sending text (and any existing attachment capability if supported in the current message composer flow).",
+        "The UI clearly indicates when the user is in a direct message conversation vs the global chat (e.g., header/title shows the recipient name)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/Sidebar.tsx",
-          "operation": "modify",
-          "description": "Update sidebar gating so the Admin Panel navigation item only renders when (1) backend admin status is true (existing useIsCallerAdmin) AND (2) the session is marked admin-unlocked (new hook). This continues to align with the authorization component’s RBAC intent by requiring backend admin status for restricted UI. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/hooks/useDirectMessages.ts",
+          "operation": "create",
+          "description": "Create react-query hooks to (1) fetch a 1:1 DM thread for a selected participant using existing backend capabilities, (2) poll for updates similar to global messages, (3) send a DM message (text + optional attachment). Use the authorization component expectations to handle authorization failures gracefully in the UI (Verify the component's usage instructions before implementing). Use ExternalBlob for attachments per blob-storage (Verify the component's usage instructions before implementing)."
         },
         {
-          "path": "frontend/src/components/AdminRouteGuard.tsx",
-          "operation": "modify",
-          "description": "Extend the guard to require both backend isCallerAdmin and the session admin-unlocked flag before rendering children. If the user is an admin but not unlocked, render an English locked-state message instructing them to unlock by tapping the logo. Keep the existing non-admin Access Denied behavior intact. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/pages/DirectMessagePage.tsx",
+          "operation": "create",
+          "description": "Add a dedicated DM thread page that renders messages for exactly two participants, polls for updates, and includes a composer for sending DMs (including existing attachment behavior via ExternalBlob). Clearly label the view as a direct message with the recipient name/username in the header area of the page. Use blob-storage ExternalBlob direct URLs for rendering attachments (Verify the component's usage instructions before implementing)."
         },
         {
-          "path": "frontend/src/components/AppLayout.tsx",
-          "operation": "modify",
-          "description": "Ensure any attempt to switch to the 'admin' view without session unlock results in an English instruction message (e.g., toast) while still preventing AdminPanelPage from rendering until unlocked; preserve the existing non-admin denial via AdminRouteGuard."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Add mobile-friendly long-press delete for messages the current user owns, calling backend deletion and updating the chat list without a full reload.",
-      "acceptanceCriteria": [
-        "Long-pressing an own message reveals a delete icon/action; messages from other users do not show a delete option.",
-        "Tapping the delete action triggers deletion and the message disappears from the list without requiring a full page reload.",
-        "Any errors returned by the backend are shown as an English toast/error message and the message remains visible."
-      ],
-      "file_operations": [
+          "path": "frontend/src/components/DirectMessageList.tsx",
+          "operation": "create",
+          "description": "Create a DM-focused message list renderer for DirectMessage items (alignment for own vs other messages, timestamps, optional attachment rendering). Ensure it can signal user interactions (e.g., clicking sender name to start DM navigation if needed, clicking avatar to open profile per REQ-3). Use blob-storage ExternalBlob direct URLs for attachment rendering (Verify the component's usage instructions before implementing)."
+        },
         {
-          "path": "frontend/src/hooks/useMessages.ts",
+          "path": "frontend/src/components/MessageComposer.tsx",
           "operation": "modify",
-          "description": "Add a react-query mutation hook for deleting a global message via the backend deleteGlobalMessage capability; on success, update/invalidate the globalMessages query so the deleted item is removed promptly; on error, surface an English toast message."
+          "description": "Refactor MessageComposer to support both Global Chat and Direct Messages (e.g., accept props for placeholder text and an onSend handler or mode). Preserve the existing attachment upload/progress behavior using ExternalBlob for both modes. Use blob-storage ExternalBlob patterns for upload progress (Verify the component's usage instructions before implementing)."
+        },
+        {
+          "path": "frontend/src/pages/UsersPage.tsx",
+          "operation": "modify",
+          "description": "Change the user selection action so pressing the existing message/select control opens a DM thread with that user (instead of switching to Global Chat). Wire this to AppLayout navigation for the new DM view."
+        },
+        {
+          "path": "frontend/src/components/UserListItem.tsx",
+          "operation": "modify",
+          "description": "Keep avatar click reserved for profile viewing (REQ-3) and use the existing message button to open the DM thread for that user; adjust props to support separate onMessage vs onAvatarClick behaviors."
         },
         {
           "path": "frontend/src/components/MessageList.tsx",
           "operation": "modify",
-          "description": "Implement a press-and-hold (long-press) interaction for own messages (senderId equals current caller principal) to reveal a delete icon/action. Only show the delete action for owned messages. When activated, call the delete mutation and update the list immediately (query cache update or invalidate) without full page reload; show English toast errors and keep the message visible if deletion fails."
+          "description": "In the Global Chat context, enable opening a DM thread by selecting a user from a message (e.g., clicking the sender name/heading opens DM while avatar click opens profile per REQ-3). Wire callbacks up to the parent page/AppLayout navigation."
         },
         {
           "path": "frontend/src/pages/GlobalChatPage.tsx",
           "operation": "modify",
-          "description": "Confirm the message list re-renders correctly after deletions by relying on the updated react-query state (no full page reload), and ensure no regression to the existing polling/react-query approach."
+          "description": "Wire GlobalChatPage -> MessageList with callbacks so selecting a sender from the global chat context navigates into the dedicated DM thread view for that sender; keep Global Chat behavior otherwise unchanged."
+        },
+        {
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Add a new internal view/state for a DM thread (including selected participant id and display info). Implement navigation wiring so DM threads can be opened from UsersPage and GlobalChatPage, and add a back navigation path to return to the previous context (e.g., a simple in-app history stack)."
+        },
+        {
+          "path": "frontend/src/components/AppHeader.tsx",
+          "operation": "modify",
+          "description": "Add support for showing DM context in the header (e.g., title/label for Direct Message and recipient name) and provide a back control when in DM view to return to the previous context. Keep all user-facing text in English. Use authorization component expectations for authenticated-only access and handle authorization errors (Verify the component's usage instructions before implementing)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Make avatars throughout the app open a read-only profile view for the clicked user (global chat, users list, and DM UI), with back navigation returning to the prior context.",
+      "acceptanceCriteria": [
+        "Clicking an avatar in the global message list opens that sender’s profile view.",
+        "Clicking an avatar in the users list opens that user’s profile view.",
+        "Clicking an avatar in any direct-message UI opens that user’s profile view.",
+        "The opened profile view displays the selected user’s public profile fields (at minimum: avatar, display name, username, bio) and does not allow editing another user’s profile.",
+        "Navigating back returns the user to the previous context (global chat, users list, or DM thread)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useProfile.ts",
+          "operation": "modify",
+          "description": "Add a new hook for fetching another user's profile by user id using existing backend capabilities (separate from the caller's editable profile). Handle authorization failures gracefully per the authorization component expectations (Verify the component's usage instructions before implementing)."
+        },
+        {
+          "path": "frontend/src/pages/UserProfileViewPage.tsx",
+          "operation": "create",
+          "description": "Create a read-only user profile view page that displays avatar, display name, username, and bio for a selected user. Ensure it does not allow editing when viewing someone else. Render avatar images via ExternalBlob direct URL when present (Verify the component's usage instructions before implementing)."
+        },
+        {
+          "path": "frontend/src/components/UserAvatar.tsx",
+          "operation": "modify",
+          "description": "Add optional click handling support (e.g., onClick, aria/role) so avatars can be interactive where needed without changing shadcn/ui internals. Ensure default behavior remains unchanged if no handler is provided."
+        },
+        {
+          "path": "frontend/src/components/MessageList.tsx",
+          "operation": "modify",
+          "description": "Make avatars in global chat clickable to open the sender’s profile view (while keeping a separate interaction for opening DMs per REQ-2). Wire through callbacks instead of introducing new top-level routes."
+        },
+        {
+          "path": "frontend/src/components/UserListItem.tsx",
+          "operation": "modify",
+          "description": "Make the avatar in the users list clickable to open that user’s profile view, while keeping the message button for opening DMs (REQ-2)."
+        },
+        {
+          "path": "frontend/src/components/DirectMessageList.tsx",
+          "operation": "modify",
+          "description": "Wire avatar clicks in the DM UI to open the corresponding participant’s profile view. Ensure this does not disrupt scrolling or message interactions."
+        },
+        {
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Add a view/state for read-only profile viewing of another user and ensure navigation/back returns to the previous context (global chat, users list, or DM thread). Wire avatar click callbacks from GlobalChatPage/UsersPage/DirectMessagePage into this view."
+        },
+        {
+          "path": "frontend/src/components/AppHeader.tsx",
+          "operation": "modify",
+          "description": "Add support for showing an appropriate header label when viewing another user's profile (read-only) and provide a back control to return to the previous context. Keep user-facing text in English."
         }
       ]
     }

@@ -38,6 +38,16 @@ export const Message = IDL.Record({
   'attachment' : IDL.Opt(ExternalBlob),
   'senderId' : UserId,
 });
+export const DirectMessage = IDL.Record({
+  'id' : MessageId,
+  'content' : IDL.Text,
+  'edited' : IDL.Bool,
+  'createdAt' : Time,
+  'senderUsername' : IDL.Text,
+  'receiverId' : UserId,
+  'attachment' : IDL.Opt(ExternalBlob),
+  'senderId' : UserId,
+});
 export const UserProfile = IDL.Record({
   'bio' : IDL.Text,
   'username' : Username,
@@ -47,6 +57,19 @@ export const UserProfile = IDL.Record({
   'isOnline' : IDL.Bool,
   'lastSeen' : Time,
   'avatar' : IDL.Opt(ExternalBlob),
+});
+export const DirectMessageSummary = IDL.Record({
+  'participant1' : UserId,
+  'participant2' : UserId,
+  'participants' : IDL.Tuple(IDL.Text, IDL.Text),
+  'createdAt' : Time,
+  'lastMessage' : IDL.Opt(DirectMessage),
+  'lastUpdated' : Time,
+  'totalMessages' : IDL.Nat,
+  'participant2Username' : IDL.Text,
+  'unreadCount' : IDL.Nat,
+  'participant1Username' : IDL.Text,
+  'threadId' : IDL.Nat,
 });
 export const RoomId = IDL.Text;
 
@@ -81,9 +104,48 @@ export const idlService = IDL.Service({
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'deleteGlobalMessage' : IDL.Func([MessageId], [], []),
   'fetchGlobalMessages' : IDL.Func([Time], [IDL.Vec(Message)], ['query']),
+  'getAllDirectMessagesStats' : IDL.Func(
+      [UserId],
+      [
+        IDL.Record({
+          'lastMessageTime' : IDL.Opt(IDL.Int),
+          'messages' : IDL.Vec(DirectMessage),
+          'totalCount' : IDL.Nat,
+          'unreadCount' : IDL.Nat,
+        }),
+      ],
+      ['query'],
+    ),
+  'getAllDirectMessagesWithUser' : IDL.Func(
+      [UserId],
+      [IDL.Vec(DirectMessage)],
+      ['query'],
+    ),
   'getAllProfiles' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getDirectMessageThread' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(IDL.Vec(DirectMessage))],
+      ['query'],
+    ),
+  'getDirectMessageThreadsStats' : IDL.Func(
+      [],
+      [IDL.Vec(DirectMessageSummary)],
+      ['query'],
+    ),
+  'getDirectMessagesWithStats' : IDL.Func(
+      [IDL.Principal],
+      [
+        IDL.Record({
+          'lastMessageTime' : IDL.Opt(IDL.Int),
+          'messages' : IDL.Vec(DirectMessage),
+          'totalCount' : IDL.Nat,
+          'unreadCount' : IDL.Nat,
+        }),
+      ],
+      ['query'],
+    ),
   'getProfile' : IDL.Func([UserId], [UserProfile], ['query']),
   'getSiteLogo' : IDL.Func([], [IDL.Opt(ExternalBlob)], ['query']),
   'getStatus' : IDL.Func(
@@ -106,6 +168,11 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'logout' : IDL.Func([], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'sendDirectMessage' : IDL.Func(
+      [IDL.Principal, IDL.Text, IDL.Opt(ExternalBlob)],
+      [],
+      [],
+    ),
   'sendMessage' : IDL.Func([RoomId, IDL.Text, IDL.Opt(ExternalBlob)], [], []),
   'sendMessageWithAttachments' : IDL.Func(
       [RoomId, IDL.Text, IDL.Vec(ExternalBlob)],
@@ -157,6 +224,16 @@ export const idlFactory = ({ IDL }) => {
     'attachment' : IDL.Opt(ExternalBlob),
     'senderId' : UserId,
   });
+  const DirectMessage = IDL.Record({
+    'id' : MessageId,
+    'content' : IDL.Text,
+    'edited' : IDL.Bool,
+    'createdAt' : Time,
+    'senderUsername' : IDL.Text,
+    'receiverId' : UserId,
+    'attachment' : IDL.Opt(ExternalBlob),
+    'senderId' : UserId,
+  });
   const UserProfile = IDL.Record({
     'bio' : IDL.Text,
     'username' : Username,
@@ -166,6 +243,19 @@ export const idlFactory = ({ IDL }) => {
     'isOnline' : IDL.Bool,
     'lastSeen' : Time,
     'avatar' : IDL.Opt(ExternalBlob),
+  });
+  const DirectMessageSummary = IDL.Record({
+    'participant1' : UserId,
+    'participant2' : UserId,
+    'participants' : IDL.Tuple(IDL.Text, IDL.Text),
+    'createdAt' : Time,
+    'lastMessage' : IDL.Opt(DirectMessage),
+    'lastUpdated' : Time,
+    'totalMessages' : IDL.Nat,
+    'participant2Username' : IDL.Text,
+    'unreadCount' : IDL.Nat,
+    'participant1Username' : IDL.Text,
+    'threadId' : IDL.Nat,
   });
   const RoomId = IDL.Text;
   
@@ -200,9 +290,48 @@ export const idlFactory = ({ IDL }) => {
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'deleteGlobalMessage' : IDL.Func([MessageId], [], []),
     'fetchGlobalMessages' : IDL.Func([Time], [IDL.Vec(Message)], ['query']),
+    'getAllDirectMessagesStats' : IDL.Func(
+        [UserId],
+        [
+          IDL.Record({
+            'lastMessageTime' : IDL.Opt(IDL.Int),
+            'messages' : IDL.Vec(DirectMessage),
+            'totalCount' : IDL.Nat,
+            'unreadCount' : IDL.Nat,
+          }),
+        ],
+        ['query'],
+      ),
+    'getAllDirectMessagesWithUser' : IDL.Func(
+        [UserId],
+        [IDL.Vec(DirectMessage)],
+        ['query'],
+      ),
     'getAllProfiles' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getDirectMessageThread' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(IDL.Vec(DirectMessage))],
+        ['query'],
+      ),
+    'getDirectMessageThreadsStats' : IDL.Func(
+        [],
+        [IDL.Vec(DirectMessageSummary)],
+        ['query'],
+      ),
+    'getDirectMessagesWithStats' : IDL.Func(
+        [IDL.Principal],
+        [
+          IDL.Record({
+            'lastMessageTime' : IDL.Opt(IDL.Int),
+            'messages' : IDL.Vec(DirectMessage),
+            'totalCount' : IDL.Nat,
+            'unreadCount' : IDL.Nat,
+          }),
+        ],
+        ['query'],
+      ),
     'getProfile' : IDL.Func([UserId], [UserProfile], ['query']),
     'getSiteLogo' : IDL.Func([], [IDL.Opt(ExternalBlob)], ['query']),
     'getStatus' : IDL.Func(
@@ -225,6 +354,11 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'logout' : IDL.Func([], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'sendDirectMessage' : IDL.Func(
+        [IDL.Principal, IDL.Text, IDL.Opt(ExternalBlob)],
+        [],
+        [],
+      ),
     'sendMessage' : IDL.Func([RoomId, IDL.Text, IDL.Opt(ExternalBlob)], [], []),
     'sendMessageWithAttachments' : IDL.Func(
         [RoomId, IDL.Text, IDL.Vec(ExternalBlob)],

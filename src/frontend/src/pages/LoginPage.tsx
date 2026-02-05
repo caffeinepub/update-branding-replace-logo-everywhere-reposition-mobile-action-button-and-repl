@@ -13,11 +13,15 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-900/30 border-2 border-purple-500/50 mb-6 shadow-lg shadow-purple-500/20">
-            <img 
-              src={logoUrl || '/assets/generated/app-logo-dexfans.dim_512x512.png'}
-              alt="Site Logo" 
-              className="w-12 h-12"
-            />
+            {logoUrl ? (
+              <img 
+                src={logoUrl}
+                alt="Site Logo" 
+                className="w-12 h-12"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-purple-800/20" />
+            )}
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">Welcome</h1>
           <p className="text-purple-300">Connect with Internet Identity to start chatting</p>

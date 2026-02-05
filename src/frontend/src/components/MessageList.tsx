@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 
 interface MessageListProps {
   messages: Message[];
+  onUserClick?: (userId: string) => void;
+  onAvatarClick?: (userId: string) => void;
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+export default function MessageList({ messages, onUserClick, onAvatarClick }: MessageListProps) {
   const { data: profiles } = useGetAllProfiles();
   const { identity } = useInternetIdentity();
   const deleteMessage = useDeleteMessage();
@@ -68,13 +70,20 @@ export default function MessageList({ messages }: MessageListProps) {
             key={message.id.toString()}
             className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
           >
-            <UserAvatar profile={profile} size="sm" />
+            <UserAvatar 
+              profile={profile} 
+              size="sm" 
+              onClick={onAvatarClick ? () => onAvatarClick(message.senderId.toString()) : undefined}
+            />
 
             <div className={`flex-1 max-w-lg ${isOwnMessage ? 'items-end' : 'items-start'} flex flex-col`}>
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-sm font-semibold ${isOwnMessage ? 'text-purple-300' : 'text-purple-200'}`}>
+                <button
+                  onClick={() => onUserClick?.(message.senderId.toString())}
+                  className={`text-sm font-semibold ${isOwnMessage ? 'text-purple-300' : 'text-purple-200'} hover:underline focus:outline-none`}
+                >
                   {profile?.displayName || message.senderUsername}
-                </span>
+                </button>
                 <span className="text-xs text-purple-400/60">
                   {formatTime(message.createdAt)}
                 </span>

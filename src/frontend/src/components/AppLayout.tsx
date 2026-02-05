@@ -1,32 +1,75 @@
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import AppHeader from './AppHeader';
 import GlobalChatPage from '../pages/GlobalChatPage';
 import UsersPage from '../pages/UsersPage';
 import ProfilePage from '../pages/ProfilePage';
 import AdminPanelPage from '../pages/AdminPanelPage';
+import DirectMessagePage from '../pages/DirectMessagePage';
+import UserProfileViewPage from '../pages/UserProfileViewPage';
 import AdminRouteGuard from './AdminRouteGuard';
 import { useAdminUnlock } from '../hooks/useAdminUnlock';
 
-type View = 'global' | 'users' | 'profile' | 'admin';
+type View = 'global' | 'users' | 'profile' | 'admin' | 'dm' | 'userProfile';
+
+interface ViewState {
+  view: View;
+  dmParticipantId?: string;
+  viewingUserId?: string;
+}
 
 export default function AppLayout() {
-  const [currentView, setCurrentView] = useState<View>('global');
+  const [viewStack, setViewStack] = useState<ViewState[]>([{ view: 'global' }]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { unlock } = useAdminUnlock();
 
+  const currentViewState = viewStack[viewStack.length - 1];
+
   const handleAdminUnlock = () => {
     unlock();
-    setCurrentView('admin');
+    pushView({ view: 'admin' });
+  };
+
+  const pushView = (newViewState: ViewState) => {
+    setViewStack([...viewStack, newViewState]);
+    setSidebarOpen(false);
+  };
+
+  const popView = () => {
+    if (viewStack.length > 1) {
+      setViewStack(viewStack.slice(0, -1));
+    }
+  };
+
+  const navigateToView = (view: View) => {
+    setViewStack([{ view }]);
+    setSidebarOpen(false);
+  };
+
+  const openDM = (userId: string) => {
+    pushView({ view: 'dm', dmParticipantId: userId });
+  };
+
+  const openUserProfile = (userId: string) => {
+    pushView({ view: 'userProfile', viewingUserId: userId });
   };
 
   const renderView = () => {
-    switch (currentView) {
+    switch (currentViewState.view) {
       case 'global':
-        return <GlobalChatPage />;
+        return (
+          <GlobalChatPage 
+            onUserClick={openDM}
+            onAvatarClick={openUserProfile}
+          />
+        );
       case 'users':
-        return <UsersPage onSelectUser={() => setCurrentView('global')} />;
+        return (
+          <UsersPage 
+            onSelectUser={openDM}
+            onAvatarClick={openUserProfile}
+          />
+        );
       case 'profile':
         return <ProfilePage />;
       case 'admin':
@@ -35,27 +78,53 @@ export default function AppLayout() {
             <AdminPanelPage />
           </AdminRouteGuard>
         );
+      case 'dm':
+        return currentViewState.dmParticipantId ? (
+          <DirectMessagePage
+            participantId={currentViewState.dmParticipantId}
+            onBack={popView}
+            onAvatarClick={openUserProfile}
+          />
+        ) : (
+          <GlobalChatPage 
+            onUserClick={openDM}
+            onAvatarClick={openUserProfile}
+          />
+        );
+      case 'userProfile':
+        return currentViewState.viewingUserId ? (
+          <UserProfileViewPage
+            userId={currentViewState.viewingUserId}
+            onBack={popView}
+          />
+        ) : (
+          <GlobalChatPage 
+            onUserClick={openDM}
+            onAvatarClick={openUserProfile}
+          />
+        );
       default:
-        return <GlobalChatPage />;
+        return (
+          <GlobalChatPage 
+            onUserClick={openDM}
+            onAvatarClick={openUserProfile}
+          />
+        );
     }
   };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <AppHeader 
-        onProfileClick={() => setCurrentView('profile')} 
+        onProfileClick={() => navigateToView('profile')} 
         onAdminUnlock={handleAdminUnlock}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        showBackButton={viewStack.length > 1}
+        onBack={popView}
       />
       
       <div className="flex-1 flex overflow-hidden">
-        {/* Mobile sidebar toggle - repositioned to right side middle */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden fixed right-4 top-1/2 -translate-y-1/2 z-50 w-14 h-14 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full shadow-lg shadow-purple-500/30 flex items-center justify-center text-white"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-
         {/* Sidebar */}
         <div
           className={`
@@ -64,11 +133,8 @@ export default function AppLayout() {
           `}
         >
           <Sidebar
-            currentView={currentView}
-            onViewChange={(view) => {
-              setCurrentView(view);
-              setSidebarOpen(false);
-            }}
+            currentView={currentViewState.view === 'dm' || currentViewState.view === 'userProfile' ? 'global' : currentViewState.view}
+            onViewChange={navigateToView}
           />
         </div>
 

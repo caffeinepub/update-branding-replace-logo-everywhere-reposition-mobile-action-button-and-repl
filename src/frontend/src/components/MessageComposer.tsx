@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSendMessage } from '../hooks/useMessages';
+import { useSendDirectMessage } from '../hooks/useDirectMessages';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Image as ImageIcon, X } from 'lucide-react';
@@ -9,11 +10,18 @@ import { toast } from 'sonner';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-export default function MessageComposer() {
+interface MessageComposerProps {
+  mode?: 'global' | 'dm';
+  recipientId?: string;
+  placeholder?: string;
+}
+
+export default function MessageComposer({ mode = 'global', recipientId, placeholder = 'Type a message...' }: MessageComposerProps) {
   const [content, setContent] = useState('');
   const [attachment, setAttachment] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const sendMessage = useSendMessage();
+  const sendGlobalMessage = useSendMessage();
+  const sendDM = useSendDirectMessage();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,10 +53,18 @@ export default function MessageComposer() {
         });
       }
 
-      await sendMessage.mutateAsync({
-        content: content.trim(),
-        attachment: attachmentBlob,
-      });
+      if (mode === 'dm' && recipientId) {
+        await sendDM.mutateAsync({
+          receiverId: recipientId,
+          content: content.trim(),
+          attachment: attachmentBlob,
+        });
+      } else {
+        await sendGlobalMessage.mutateAsync({
+          content: content.trim(),
+          attachment: attachmentBlob,
+        });
+      }
 
       setContent('');
       setAttachment(null);
@@ -64,6 +80,8 @@ export default function MessageComposer() {
       handleSend();
     }
   };
+
+  const isPending = mode === 'dm' ? sendDM.isPending : sendGlobalMessage.isPending;
 
   return (
     <div className="space-y-2">
@@ -94,14 +112,14 @@ export default function MessageComposer() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type a message..."
+          placeholder={placeholder}
           rows={1}
           className="flex-1 bg-black/50 border-purple-500/30 text-white placeholder:text-purple-300/40 focus:border-purple-500 focus:ring-purple-500/20 resize-none"
         />
 
         <input
           type="file"
-          id="file-upload"
+          id={`file-upload-${mode}`}
           accept="image/jpeg,image/png,image/webp"
           onChange={handleFileSelect}
           className="hidden"
@@ -109,7 +127,7 @@ export default function MessageComposer() {
 
         <Button
           type="button"
-          onClick={() => document.getElementById('file-upload')?.click()}
+          onClick={() => document.getElementById(`file-upload-${mode}`)?.click()}
           variant="outline"
           size="icon"
           className="border-purple-500/30 text-purple-300 hover:bg-purple-900/30 hover:text-white"
@@ -119,10 +137,10 @@ export default function MessageComposer() {
 
         <Button
           onClick={handleSend}
-          disabled={(!content.trim() && !attachment) || sendMessage.isPending}
+          disabled={(!content.trim() && !attachment) || isPending}
           className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg shadow-purple-500/30"
         >
-          {sendMessage.isPending ? (
+          {isPending ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <Send className="w-5 h-5" />

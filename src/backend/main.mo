@@ -9,11 +9,12 @@ import Map "mo:core/Map";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
-import Migration "migration";
+
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
 (with migration = Migration.run)
 actor {
@@ -40,6 +41,31 @@ actor {
 
   public type RoomId = Text;
 
+  public type DirectMessageThreadId = Nat;
+  var directMessageThreadCounter = 0;
+
+  public type DirectMessage = {
+    id : MessageId;
+    senderId : UserId;
+    senderUsername : Text;
+    receiverId : UserId;
+    content : Text;
+    createdAt : Time.Time;
+    attachment : ?Storage.ExternalBlob;
+    edited : Bool;
+  };
+
+  public type DirectMessageThread = {
+    id : DirectMessageThreadId;
+    participant1 : UserId;
+    participant2 : UserId;
+    createdAt : Time.Time;
+    messages : [DirectMessage];
+    lastUpdated : Time.Time;
+  };
+
+  let directMessageThreads = Map.empty<DirectMessageThreadId, DirectMessageThread>();
+
   public type UserProfile = {
     userId : UserId;
     username : Username;
@@ -63,18 +89,31 @@ actor {
     };
   };
 
+  public type DirectMessageSummary = {
+    threadId : Nat;
+    participant1 : UserId;
+    participant2 : UserId;
+    participants : (Text, Text);
+    participant1Username : Text;
+    participant2Username : Text;
+    lastMessage : ?DirectMessage;
+    unreadCount : Nat;
+    totalMessages : Nat;
+    lastUpdated : Time.Time;
+    createdAt : Time.Time;
+  };
+
+  var messageCounter = 0;
+  var siteLogo : ?Storage.ExternalBlob = null;
   let startupTime = Time.now();
 
   let users = Map.empty<UserId, UserProfile>();
   let usernameToId = Map.empty<Text, UserId>();
   let globalMessages = Map.empty<MessageId, Message>();
   let deletedMessageIds = Map.empty<MessageId, ()>();
-  var messageCounter = 0;
-  var siteLogo : ?Storage.ExternalBlob = null;
 
-  let failedLoginAttempts : List.List<UserId> = List.empty();
+  let failedLoginAttempts = List.empty<UserId>();
 
-  // Frontend-required: Get caller's own profile
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can access profiles");
@@ -82,7 +121,6 @@ actor {
     users.get(caller);
   };
 
-  // Frontend-required: Save caller's own profile
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can save profiles");
@@ -96,7 +134,6 @@ actor {
     users.add(caller, profile);
   };
 
-  // Frontend-required: Get another user's profile (public info only)
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
     // Allow users to view their own profile or admins to view any profile
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
@@ -233,7 +270,7 @@ actor {
   };
 
   public query ({ caller }) func fetchGlobalMessages(fromTimestamp : Time.Time) : async [Message] {
-    // Only authenticated users can fetch global messages
+    // Only authenticated users can fetch messages
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can fetch messages");
     };
@@ -249,7 +286,277 @@ actor {
     visibleMessages.sort();
   };
 
-  public shared ({ caller }) func sendMessage(room : RoomId, content : Text, attachment : ?Storage.ExternalBlob) : async () {
+  func findThreadId(participant1 : Principal, participant2 : Principal) : ?DirectMessageThreadId {
+    var foundThreadId : ?DirectMessageThreadId = null;
+    directMessageThreads.forEach(
+      func(threadId, thread) {
+        if ((thread.participant1 == participant1 and thread.participant2 == participant2) or
+          (thread.participant1 == participant2 and thread.participant2 == participant1)) {
+          foundThreadId := ?threadId;
+        };
+      }
+    );
+    foundThreadId;
+  };
+
+  func isThreadParticipant(caller : Principal, thread : DirectMessageThread) : Bool {
+    thread.participant1 == caller or thread.participant2 == caller;
+  };
+
+  public shared ({ caller }) func sendDirectMessage(receiver : Principal, content : Text, attachment : ?Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can send direct messages");
+    };
+
+    let receiverProfile = users.get(receiver);
+    if (receiverProfile == null) {
+      Runtime.trap("Receiver does not exist!");
+    };
+
+    let senderUsername = switch (users.get(caller)) {
+      case (?profile) { profile.username };
+      case (null) { caller.toText() };
+    };
+
+    let newMessage : DirectMessage = {
+      id = messageCounter;
+      senderId = caller;
+      senderUsername;
+      receiverId = receiver;
+      content;
+      createdAt = Time.now();
+      attachment;
+      edited = false;
+    };
+    messageCounter += 1;
+
+    let (threadId, thread) = switch (findThreadId(caller, receiver)) {
+      case (?id) {
+        switch (directMessageThreads.get(id)) {
+          case (?t) { (id, t) };
+          case (null) { Runtime.trap("Thread not found for existing threadId") };
+        };
+      };
+      case (null) {
+        let newThreadId = directMessageThreadCounter;
+        directMessageThreadCounter += 1;
+        let thread1 = {
+          id = newThreadId;
+          participant1 = caller;
+          participant2 = receiver;
+          createdAt = Time.now();
+          messages = [];
+          lastUpdated = Time.now();
+        };
+        directMessageThreads.add(newThreadId, thread1);
+        (newThreadId, thread1);
+      };
+    };
+
+    let updatedMessages = thread.messages.concat([newMessage]);
+    let threadUpdated : DirectMessageThread = {
+      id = thread.id;
+      participant1 = thread.participant1;
+      participant2 = thread.participant2;
+      createdAt = thread.createdAt;
+      messages = updatedMessages;
+      lastUpdated = Time.now();
+    };
+    directMessageThreads.add(threadId, threadUpdated);
+  };
+
+  public query ({ caller }) func getDirectMessageThread(participant : Principal) : async ?[DirectMessage] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can fetch direct messages");
+    };
+
+    switch (findThreadId(caller, participant)) {
+      case (?threadId) {
+        switch (directMessageThreads.get(threadId)) {
+          case (?thread) {
+            if (not isThreadParticipant(caller, thread)) {
+              Runtime.trap("Unauthorized: Can only access your own direct message threads");
+            };
+            ?thread.messages;
+          };
+          case (null) { null };
+        };
+      };
+      case (null) { null };
+    };
+  };
+
+  public query ({ caller }) func getDirectMessagesWithStats(participant : Principal) : async {
+    messages : [DirectMessage];
+    totalCount : Nat;
+    unreadCount : Nat;
+    lastMessageTime : ?Int;
+  } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can fetch direct messages");
+    };
+
+    switch (findThreadId(caller, participant)) {
+      case (?threadId) {
+        switch (directMessageThreads.get(threadId)) {
+          case (?thread) {
+            if (not isThreadParticipant(caller, thread)) {
+              Runtime.trap("Unauthorized: Can only access your own direct message threads");
+            };
+
+            var unreadCount = 0;
+            if (thread.messages.size() > 0) {
+              var unreadCount = 0;
+            };
+            let lastMessageTime = if (thread.messages.size() > 0) {
+              ?thread.messages[thread.messages.size() - 1].createdAt;
+            } else { null };
+
+            {
+              messages = thread.messages;
+              totalCount = thread.messages.size();
+              unreadCount;
+              lastMessageTime;
+            };
+          };
+          case (null) {
+            {
+              messages = [];
+              totalCount = 0;
+              unreadCount = 0;
+              lastMessageTime = null;
+            };
+          };
+        };
+      };
+      case (null) {
+        {
+          messages = [];
+          totalCount = 0;
+          unreadCount = 0;
+          lastMessageTime = null;
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func getAllDirectMessagesWithUser(userId : UserId) : async [DirectMessage] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can fetch direct messages");
+    };
+
+    switch (findThreadId(caller, userId)) {
+      case (?threadId) {
+        switch (directMessageThreads.get(threadId)) {
+          case (?thread) {
+            if (not isThreadParticipant(caller, thread)) {
+              Runtime.trap("Unauthorized: Can only access your own direct message threads");
+            };
+            thread.messages;
+          };
+          case (null) { [] };
+        };
+      };
+      case (null) { [] };
+    };
+  };
+
+  public query ({ caller }) func getAllDirectMessagesStats(userId : UserId) : async {
+    messages : [DirectMessage];
+    totalCount : Nat;
+    unreadCount : Nat;
+    lastMessageTime : ?Int;
+  } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can fetch direct messages");
+    };
+
+    switch (findThreadId(caller, userId)) {
+      case (?threadId) {
+        switch (directMessageThreads.get(threadId)) {
+          case (?thread) {
+            if (not isThreadParticipant(caller, thread)) {
+              Runtime.trap("Unauthorized: Can only access your own direct message threads");
+            };
+
+            var unreadCount = 0;
+            if (thread.messages.size() > 0) {
+              var unreadCount = 0;
+            };
+            let lastMessageTime = if (thread.messages.size() > 0) {
+              ?thread.messages[thread.messages.size() - 1].createdAt;
+            } else { null };
+
+            {
+              messages = thread.messages;
+              totalCount = thread.messages.size();
+              unreadCount;
+              lastMessageTime;
+            };
+          };
+          case (null) {
+            {
+              messages = [];
+              totalCount = 0;
+              unreadCount = 0;
+              lastMessageTime = null;
+            };
+          };
+        };
+      };
+      case (null) {
+        {
+          messages = [];
+          totalCount = 0;
+          unreadCount = 0;
+          lastMessageTime = null;
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func getDirectMessageThreadsStats() : async [DirectMessageSummary] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can fetch direct messages");
+    };
+
+    let allThreads = directMessageThreads.values().toArray();
+    let callerThreads = allThreads.filter(func(thread) { isThreadParticipant(caller, thread) });
+    let threadSummaries = callerThreads.map(func(thread) { createDirectMessagesSummary(thread) });
+    threadSummaries;
+  };
+
+  func createDirectMessagesSummary(thread : DirectMessageThread) : DirectMessageSummary {
+    let (participant1Username, participant2Username) = switch (users.get(thread.participant1)) {
+      case (?user1Profile) {
+        switch (users.get(thread.participant2)) {
+          case (?user2Profile) {
+            (user1Profile.username, user2Profile.username);
+          };
+          case (null) { ("", "") };
+        };
+      };
+      case (null) { ("", "") };
+    };
+
+    {
+      threadId = thread.id;
+      participant1 = thread.participant1;
+      participant2 = thread.participant2;
+      participants = (participant1Username, participant2Username);
+      participant1Username;
+      participant2Username;
+      lastMessage = if (thread.messages.size() > 0) {
+        ?thread.messages[thread.messages.size() - 1];
+      } else { null };
+      unreadCount = 0;
+      totalMessages = thread.messages.size();
+      lastUpdated = thread.lastUpdated;
+      createdAt = thread.createdAt;
+    };
+  };
+
+  public shared ({ caller }) func sendMessage(roomId : RoomId, content : Text, attachment : ?Storage.ExternalBlob) : async () {
     // Only authenticated users can send messages
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can send messages");
