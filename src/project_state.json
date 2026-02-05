@@ -1,0 +1,239 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 20,
+  "summary": "Internet Computer app scaffolded: a Motoko backend with authorization + blob storage and a React (Vite) frontend implementing Internet Identity login, user profiles (incl. avatar upload), and a basic global chat UI with users listing. Branding to be updated for “Ghost Chat” with a new site logo.",
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "Motoko backend canister scaffold (main canister wiring)",
+      "synonyms": [
+        "core backend",
+        "backend/main.mo"
+      ],
+      "description": "Backend canister entrypoint and module wiring established for app services (authorization + storage).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Authorization and access control module",
+      "synonyms": [
+        "MixinAuthorization",
+        "access-control"
+      ],
+      "description": "Backend authorization mixin and access-control logic added to gate operations by caller identity.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "Blob storage canister/module for file uploads",
+      "synonyms": [
+        "blob storage",
+        "Storage.mo",
+        "backend/blob-storage"
+      ],
+      "description": "Backend blob storage implementation added for storing and retrieving uploaded assets (e.g., user avatars).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "React frontend scaffold (Vite + Tailwind + shadcn/ui)",
+      "synonyms": [
+        "frontend scaffold",
+        "UI kit"
+      ],
+      "description": "Frontend project created with shared UI components and styling infrastructure for building app pages and layouts.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "Internet Identity authentication flow",
+      "synonyms": [
+        "II login",
+        "useInternetIdentity",
+        "useActor"
+      ],
+      "description": "Frontend login and actor initialization implemented using Internet Identity for authentication against the backend canister.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-6",
+      "title": "User profile setup and management (including avatar picker)",
+      "synonyms": [
+        "ProfileSetupModal",
+        "ProfilePage",
+        "AvatarPicker",
+        "UserAvatar"
+      ],
+      "description": "UI and hooks to create/edit a user profile and set an avatar (including upload validation and storage client integration).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-7",
+      "title": "Global chat UI (message list + composer)",
+      "synonyms": [
+        "GlobalChatPage",
+        "MessageList",
+        "MessageComposer",
+        "useMessages"
+      ],
+      "description": "Basic global chat page implemented with message list rendering and message composing/sending UX.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-8",
+      "title": "Users listing UI",
+      "synonyms": [
+        "UsersPage",
+        "Sidebar",
+        "UserListItem",
+        "useProfile"
+      ],
+      "description": "Users page and sidebar/list items to browse users and their profile/avatars.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-9",
+      "title": "Build/deploy template for ICP (Dockerfile, scripts, canister configs)",
+      "synonyms": [
+        "build-template",
+        "icp.yaml",
+        "deploy.sh"
+      ],
+      "description": "Project includes a reusable build/deploy template with pruning/resizing scripts and canister configuration for backend/frontend.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-10",
+      "title": "Updated site branding logo asset (DexFans)",
+      "synonyms": [
+        "site logo",
+        "app-logo-dexfans",
+        "frontend/public/assets/generated/app-logo-dexfans.dim_512x512.png"
+      ],
+      "description": "Replaced/updated the application logo asset to the DexFans-provided branding version for use in the frontend.",
+      "reqIds": [
+        "AR-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-hidden-admin-panel-unlock-flow-triggered-by-tapping-clicking-the-site-logo-in-the-app-header-when-the-logo-is-tapped-show-a-password-prompt-if-the-entered-password-matches-exactly-dexgod-mark-the-current-session-as-admin-unlocked-and-navigate-the-user-to-the-admin-panel-view",
+      "title": "Add a hidden Admin Panel unlock flow triggered by tapping/clicking the site logo in the app header. When the logo is tapped, show a password prompt. If the entered password matches exactly \"DexGod\", mark the current session as \"admin unlocked\" and navigate the user to the Admin Panel view.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-gate-admin-panel-navigation-and-rendering-behind-both-1-backend-admin-authorization-existing-iscalleradmin-and-2-the-new-admin-unlocked-session-state-from-the-logo-password-prompt-ensure-non-admin-users-cannot-access-the-admin-panel-even-if-they-guess-the-password-and-ensure-admin-users-still-cannot-access-admin-panel-until-they-have-unlocked-it-in-the-current-session",
+      "title": "Gate Admin Panel navigation and rendering behind both (1) backend admin authorization (existing isCallerAdmin) and (2) the new \"admin unlocked\" session state from the logo password prompt. Ensure non-admin users cannot access the Admin Panel even if they guess the password, and ensure admin users still cannot access Admin Panel until they have unlocked it in the current session.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-mobile-friendly-long-press-press-and-hold-interaction-on-messages-in-the-global-chat-ui-that-the-user-owns-senderid-equals-current-caller-on-long-press-show-a-delete-icon-action-for-that-message-when-activated-delete-the-message-via-the-backend-and-remove-it-from-the-chat-log-ui-refresh-query-state-accordingly",
+      "title": "Add a mobile-friendly long-press (press-and-hold) interaction on messages in the global chat UI that the user owns (senderId equals current caller). On long-press, show a delete icon/action for that message; when activated, delete the message via the backend and remove it from the chat log UI (refresh query state accordingly).",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-3",
+      "summary": "Move the purple circle UI element (currently above the Send button) to the middle of the side",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Remove the footer entirely and replace it with \"DexFans 2026\"",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Rename the site/app to \"Ghost Chat\" and replace the site logo everywhere using the provided URL (https://file-vault-vog.caffeine.xyz/f/1770272991402-fgyl4ae)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Rename the site/app to \"Ghost Chat\" in all user-facing UI text and browser metadata (e.g., header brand text and the HTML document title).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Replace the site logo everywhere it appears in the frontend with the user-provided logo from https://file-vault-vog.caffeine.xyz/f/1770272991402-fgyl4ae, and update image alt text to \"Ghost Chat Logo\".",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add the Ghost Chat logo as a static frontend asset under frontend/public/assets/generated and ensure all logo usages reference that local static asset path (do not fetch the logo from the remote URL at runtime).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add/lock down an admin panel that opens only when tapping the site logo; only the owner can access it via an admin password (currently: DexGod), and it can be used to change/upload the site logo image.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Allow users to delete their own chat messages via a mobile long-press/press-and-hold gesture that reveals a delete icon; deletion removes the message from the chat log.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Implement backend support for deleting a global chat message: add an update method that deletes a message by messageId, allowing only the original sender to delete their own message (and optionally admins). The deleted message must be removed from fetchGlobalMessages results so it disappears from the chat log for everyone.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "architectural_notes": [
+    "Backend is implemented in Motoko with modular authorization (MixinAuthorization/access-control) and a separate blob-storage module for uploaded assets.",
+    "Frontend is a React (Vite) app using Tailwind + shadcn/ui component library.",
+    "Authentication uses Internet Identity; frontend establishes an authenticated actor to call the backend canister.",
+    "Asset handling includes client-side validation plus a StorageClient abstraction to interact with backend blob storage.",
+    "Repo includes an ICP-oriented build/deploy template (Dockerfile, canister yamls, deploy script, image resize/prune scripts).",
+    "Backend authorization and blob-storage components updated to v4.0.0 (per build labels).",
+    "Project build-template and React frontend template synced/updated to v1.0.0 (per build labels), touching Dockerfile/scripts/canister yamls and shadcn/ui component set."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "generatedImages": [
+    {
+      "filename": "frontend/public/assets/generated/app-logo-dexfans.dim_512x512.png",
+      "description": "Generated/added updated DexFans application logo asset.",
+      "targetWidth": 512,
+      "targetHeight": 512
+    }
+  ],
+  "projectName": "Ghost Chat",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

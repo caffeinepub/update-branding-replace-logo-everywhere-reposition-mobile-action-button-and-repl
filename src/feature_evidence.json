@@ -1,0 +1,70 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-hidden-admin-panel-unlock-flow-triggered-by-tapping-clicking-the-site-logo-in-the-app-header-when-the-logo-is-tapped-show-a-password-prompt-if-the-entered-password-matches-exactly-dexgod-mark-the-current-session-as-admin-unlocked-and-navigate-the-user-to-the-admin-panel-view",
+      "featureTitle": "Add a hidden Admin Panel unlock flow triggered by tapping/clicking the site logo in the app header. When the logo is tapped, show a password prompt. If the entered password matches exactly \"DexGod\", mark the current session as \"admin unlocked\" and navigate the user to the Admin Panel view.",
+      "files": [
+        "frontend/src/components/AppHeader.tsx",
+        "frontend/src/components/AppLayout.tsx",
+        "frontend/src/hooks/useAdminUnlock.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-gate-admin-panel-navigation-and-rendering-behind-both-1-backend-admin-authorization-existing-iscalleradmin-and-2-the-new-admin-unlocked-session-state-from-the-logo-password-prompt-ensure-non-admin-users-cannot-access-the-admin-panel-even-if-they-guess-the-password-and-ensure-admin-users-still-cannot-access-admin-panel-until-they-have-unlocked-it-in-the-current-session",
+      "featureTitle": "Gate Admin Panel navigation and rendering behind both (1) backend admin authorization (existing isCallerAdmin) and (2) the new \"admin unlocked\" session state from the logo password prompt. Ensure non-admin users cannot access the Admin Panel even if they guess the password, and ensure admin users still cannot access Admin Panel until they have unlocked it in the current session.",
+      "files": [
+        "frontend/src/components/AdminRouteGuard.tsx",
+        "frontend/src/components/AppLayout.tsx",
+        "frontend/src/components/Sidebar.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-mobile-friendly-long-press-press-and-hold-interaction-on-messages-in-the-global-chat-ui-that-the-user-owns-senderid-equals-current-caller-on-long-press-show-a-delete-icon-action-for-that-message-when-activated-delete-the-message-via-the-backend-and-remove-it-from-the-chat-log-ui-refresh-query-state-accordingly",
+      "featureTitle": "Add a mobile-friendly long-press (press-and-hold) interaction on messages in the global chat UI that the user owns (senderId equals current caller). On long-press, show a delete icon/action for that message; when activated, delete the message via the backend and remove it from the chat log UI (refresh query state accordingly).",
+      "files": [
+        "frontend/src/components/MessageList.tsx",
+        "frontend/src/hooks/useMessages.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

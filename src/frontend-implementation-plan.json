@@ -1,0 +1,85 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Hidden admin unlock via logo prompt + long-press delete for own global chat messages",
+  "requirements": [
+    {
+      "id": "REQ-4",
+      "summary": "Add a hidden admin unlock flow by tapping the header logo to prompt for a password and unlock the admin session, then navigate to Admin Panel.",
+      "acceptanceCriteria": [
+        "Tapping/clicking the logo in the header opens a password prompt (not visible otherwise).",
+        "Entering \"DexGod\" successfully unlocks the admin session and takes the user to the Admin Panel view.",
+        "Entering any other password shows an English error message and does not unlock admin access."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useAdminUnlock.ts",
+          "operation": "create",
+          "description": "Create a small session-scoped admin unlock state helper (e.g., sessionStorage-backed) that can set/clear/read an \"admin unlocked\" flag for the current browser session."
+        },
+        {
+          "path": "frontend/src/components/AppHeader.tsx",
+          "operation": "modify",
+          "description": "Make the site logo clickable/tappable; on click, open a password prompt and compare against the exact string \"DexGod\". On success, set the admin-unlocked session state (via the new hook) and trigger navigation to the Admin Panel view; on failure, show an English error message (e.g., via toast). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Wire the header logo unlock flow into view navigation: pass an explicit handler into AppHeader so a successful unlock can set the current view to 'admin' immediately."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Gate Admin Panel navigation and rendering behind both backend admin authorization and the new session-based admin unlock state.",
+      "acceptanceCriteria": [
+        "Admin Panel entry is not shown in the sidebar unless the caller is an admin AND the session is unlocked.",
+        "Attempting to switch to the Admin Panel view without unlocking shows an English message instructing the user to unlock via the logo password.",
+        "Attempting to switch to the Admin Panel view as a non-admin continues to show an English access denied state (existing behavior)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Sidebar.tsx",
+          "operation": "modify",
+          "description": "Update sidebar gating so the Admin Panel navigation item only renders when (1) backend admin status is true (existing useIsCallerAdmin) AND (2) the session is marked admin-unlocked (new hook). This continues to align with the authorization component’s RBAC intent by requiring backend admin status for restricted UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AdminRouteGuard.tsx",
+          "operation": "modify",
+          "description": "Extend the guard to require both backend isCallerAdmin and the session admin-unlocked flag before rendering children. If the user is an admin but not unlocked, render an English locked-state message instructing them to unlock by tapping the logo. Keep the existing non-admin Access Denied behavior intact. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Ensure any attempt to switch to the 'admin' view without session unlock results in an English instruction message (e.g., toast) while still preventing AdminPanelPage from rendering until unlocked; preserve the existing non-admin denial via AdminRouteGuard."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add mobile-friendly long-press delete for messages the current user owns, calling backend deletion and updating the chat list without a full reload.",
+      "acceptanceCriteria": [
+        "Long-pressing an own message reveals a delete icon/action; messages from other users do not show a delete option.",
+        "Tapping the delete action triggers deletion and the message disappears from the list without requiring a full page reload.",
+        "Any errors returned by the backend are shown as an English toast/error message and the message remains visible."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useMessages.ts",
+          "operation": "modify",
+          "description": "Add a react-query mutation hook for deleting a global message via the backend deleteGlobalMessage capability; on success, update/invalidate the globalMessages query so the deleted item is removed promptly; on error, surface an English toast message."
+        },
+        {
+          "path": "frontend/src/components/MessageList.tsx",
+          "operation": "modify",
+          "description": "Implement a press-and-hold (long-press) interaction for own messages (senderId equals current caller principal) to reveal a delete icon/action. Only show the delete action for owned messages. When activated, call the delete mutation and update the list immediately (query cache update or invalidate) without full page reload; show English toast errors and keep the message visible if deletion fails."
+        },
+        {
+          "path": "frontend/src/pages/GlobalChatPage.tsx",
+          "operation": "modify",
+          "description": "Confirm the message list re-renders correctly after deletions by relying on the updated react-query state (no full page reload), and ensure no regression to the existing polling/react-query approach."
+        }
+      ]
+    }
+  ]
+}

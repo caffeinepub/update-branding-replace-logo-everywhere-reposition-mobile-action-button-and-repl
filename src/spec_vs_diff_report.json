@@ -1,0 +1,56 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-05T09:01:06.847Z",
+  "summary": "REQ-4 and REQ-5 appear implemented via a logo-click password dialog + sessionStorage-based unlock state, with Admin Panel gated by both backend admin check and unlock state. REQ-6 cannot be confirmed from the provided backend diff truncation (no visible delete update method or fetch filtering change). REQ-7 long-press state/handlers and delete mutation exist, but the actual conditional delete action rendering is truncated and cannot be fully verified.",
+  "missing_requirements": [
+    {
+      "id": "REQ-6",
+      "requirement": "Implement backend support for deleting a global chat message via a new update method that deletes by messageId (only sender, optionally admin), and ensure deleted messages are removed from fetchGlobalMessages results.",
+      "reason": "The diff shows new state for deletedMessageIds and a migration, but does not show any new public/shared update method (e.g., deleteGlobalMessage) nor changes to fetchGlobalMessages to filter out deleted messages; backend/main.mo is truncated before any such implementation is visible.",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "On long-press of an own message, reveal a delete icon/action for that message (messages from others must not show delete).",
+      "reason": "MessageList.tsx shows long-press detection state (longPressMessageId) and computes showDeleteButton, but the render section where the delete icon/action would be conditionally displayed is truncated, so the UI reveal behavior cannot be verified from the provided diff summary.",
+      "evidence": [
+        "frontend/src/components/MessageList.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added URL parameter/sessionStorage helper utilities (getUrlParameter/getPersistedUrlParameter/etc.).",
+      "reason": "Not requested by any requirement; unrelated to admin unlock via logo tap or message deletion/long-press behavior.",
+      "evidence": [
+        "frontend/src/utils/urlParams.ts"
+      ]
+    },
+    {
+      "description": "Repositioned mobile sidebar toggle button to fixed right-side middle with new styling.",
+      "reason": "Not requested; requirements focus on admin unlock flow and message deletion UX.",
+      "evidence": [
+        "frontend/src/components/AppLayout.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/AdminRouteGuard.tsx",
+    "frontend/src/components/AppHeader.tsx",
+    "frontend/src/components/AppLayout.tsx",
+    "frontend/src/components/MessageList.tsx",
+    "frontend/src/components/Sidebar.tsx",
+    "frontend/src/hooks/useAdminUnlock.ts",
+    "frontend/src/hooks/useMessages.ts",
+    "frontend/src/utils/urlParams.ts",
+    "project_state.json"
+  ]
+}
